@@ -1,0 +1,48 @@
+input {
+file {
+path => "/app/weblog.csv"
+start_position => "beginning"
+}
+}
+
+filter {
+
+csv {
+columns => [
+"IP","Time","URL","Status"
+]
+separator => ","
+skip_header => true
+}
+
+mutate {
+gsub => ["Time", "\[", ""]
+remove_field => [
+"@timestamp",
+"host",
+"message",
+"@version",
+"path"
+]
+}
+
+date {
+match => ["Time", "dd/MMM/yyyy:HH:mm:ss"]
+target => "Time"
+}
+
+if "_dateparsefailure" in [tags] {
+
+drop {}
+
+}
+
+}
+
+output {
+elasticsearch {
+hosts => "elasticsearch"
+index => "weblog_template"
+}
+stdout {}
+}
